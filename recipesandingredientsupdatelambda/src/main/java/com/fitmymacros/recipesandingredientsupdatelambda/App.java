@@ -3,7 +3,8 @@ package com.fitmymacros.recipesandingredientsupdatelambda;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -13,7 +14,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
 public class App implements RequestHandler<Map<String, Object>, Object> {
 
@@ -35,22 +36,29 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
     public Object handleRequest(Map<String, Object> input, Context context) {
         try {
             System.out.println("input: " + input);
-            String userId = (String) input.get("userId");
-            List<String> lastRecipes = (List<String>) input.get("lastRecipes");
+            Map<String, Object> body = (Map<String, Object>) input.get("body");
+            System.out.println("body: " + body);
+            String userId = (String) body.get("userId");
+            Map<String, Object> recipe = (Map<String, Object>) body.get("recipe");
+            System.out.println("recipe: " + recipe);
+
+            String recipeName = recipe.get("recipeName").toString();
+            Map<String, String> ingredientsAndQuantities = (Map<String, String>) recipe.get("ingredientsAndQuantities");
 
             Map<String, AttributeValue> item = retrieveItemFromDynamoDB(userId);
             System.out.println("item: " + item);
             List<AttributeValue> previousRecipes = item.get("previous_recipes").l();
+            Map<String, AttributeValue> food = item.get("food").m();
 
             if (previousRecipes.size() < 6) {
-                previousRecipes.addAll(convertRecipesToListAttributeValues(lastRecipes));
+                previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             } else {
-                int numToRemove = lastRecipes.size();
-                previousRecipes.subList(0, numToRemove).clear();
-                previousRecipes.addAll(convertRecipesToListAttributeValues(lastRecipes));
+                previousRecipes.subList(0, 1).clear();
+                previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             }
+            System.out.println("updated previous recipes: " + previousRecipes);
 
-            updateItemInDynamoDB(userId, previousRecipes);
+            updateItemInDynamoDB(userId, previousRecipes, ingredientsAndQuantities, food);
 
             return buildSuccessResponse();
         } catch (Exception e) {
@@ -74,23 +82,92 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
         return getItemResponse.item();
     }
 
-    private void updateItemInDynamoDB(String userId, List<AttributeValue> previousRecipes) {
-        Map<String, AttributeValue> item = new HashMap<>();
-        item.put("userId", AttributeValue.builder().s(userId).build());
-        item.put("previous_recipes", AttributeValue.builder().l(previousRecipes).build());
+    /**
+     * This method updates the last recipes and the ingredients availability, for
+     * the user
+     * identified by userId in dynamoDB
+     * 
+     * @param userId
+     * @param previousRecipes
+     * @param ingredientsAndQuantities
+     * @param food
+     */
+    private void updateItemInDynamoDB(String userId, List<AttributeValue> previousRecipes,
+            Map<String, String> ingredientsAndQuantities, Map<String, AttributeValue> food) {
+        Map<String, AttributeValue> updatedFood = this.updateFoodAvailability(ingredientsAndQuantities, food);
+        System.out.println("updated food map: " + updatedFood);
+        Map<String, String> expressionAttributeNames = new HashMap<>();
+        expressionAttributeNames.put("#PR", "previous_recipes");
+        expressionAttributeNames.put("#F", "food");
 
-        PutItemRequest putItemRequest = PutItemRequest.builder()
+        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+        expressionAttributeValues.put(":pr", AttributeValue.builder().l(previousRecipes).build());
+        expressionAttributeValues.put(":f", AttributeValue.builder().m(updatedFood).build());
+
+        UpdateItemRequest updateItemRequest = UpdateItemRequest.builder()
                 .tableName(TABLE_NAME)
-                .item(item)
+                .key(Map.of("userId", AttributeValue.builder().s(userId).build()))
+                .updateExpression("SET #PR = :pr, #F = :f") // Update both previous_recipes and food attributes
+                .expressionAttributeNames(expressionAttributeNames)
+                .expressionAttributeValues(expressionAttributeValues)
                 .build();
 
-        dynamoDbClient.putItem(putItemRequest);
+        dynamoDbClient.updateItem(updateItemRequest);
     }
 
-    private List<AttributeValue> convertRecipesToListAttributeValues(List<String> recipes) {
-        return recipes.stream()
-                .map(recipe -> AttributeValue.builder().s(recipe).build())
-                .collect(Collectors.toList());
+    /**
+     * This method updates the food map, by substracting the quantites for the
+     * ingredients that are provided in ingredientsAndQuantities
+     * 
+     * @param ingredientsAndQuantities
+     * @param food
+     * @return
+     */
+    private Map<String, AttributeValue> updateFoodAvailability(Map<String, String> ingredientsAndQuantities,
+            Map<String, AttributeValue> food) {
+        for (Map.Entry<String, String> entry : ingredientsAndQuantities.entrySet()) {
+            String ingredient = entry.getKey();
+            String quantityString = entry.getValue();
+
+            if (food.containsKey(ingredient)) {
+                AttributeValue ingredientValue = food.get(ingredient);
+                String usedQuantityString = this.extractUsedQuantity(quantityString);
+
+                int requestedQuantity = Integer.valueOf(usedQuantityString);
+
+                // If the quantity is provided as grams or kilograms
+                if (quantityString.endsWith("g") || quantityString.endsWith("kg")) {
+                    int availableQuantity = Integer.valueOf(ingredientValue.n());
+                    int remainingQuantity = availableQuantity - requestedQuantity;
+                    food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+
+                } else {
+                    // If the quantity is provided as just a number (meaning units)
+                    int availableQuantity = Integer.valueOf(ingredientValue.s());
+                    int remainingQuantity = availableQuantity - requestedQuantity;
+                    food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                }
+            }
+        }
+        return food;
+    }
+
+    /**
+     * This method recives a String that represents some quantity, as grams, or
+     * units, and extracts number of it
+     * 
+     * @param quantityString
+     * @return
+     */
+    private String extractUsedQuantity(String quantityString) {
+        Pattern pattern = Pattern.compile("^\\d+");
+        Matcher matcher = pattern.matcher(quantityString);
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            System.out.println("No number found at the beginning of the string.");
+            return "0";
+        }
     }
 
     private Map<String, Object> buildSuccessResponse() {

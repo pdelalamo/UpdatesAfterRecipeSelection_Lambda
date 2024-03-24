@@ -36,8 +36,8 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
     public Object handleRequest(Map<String, Object> input, Context context) {
         try {
             System.out.println("input: " + input);
+            System.out.println("body: " + input.get("body").toString());
             Map<String, Object> body = (Map<String, Object>) input.get("body");
-            System.out.println("body: " + body);
             String userId = (String) body.get("userId");
             Map<String, Object> recipe = (Map<String, Object>) body.get("recipe");
             System.out.println("recipe: " + recipe);
@@ -127,6 +127,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             Map<String, AttributeValue> food) {
         for (Map.Entry<String, String> entry : ingredientsAndQuantities.entrySet()) {
             String ingredient = entry.getKey();
+            ingredient = ingredient.replace("(dry)", "");
             String quantityString = entry.getValue();
 
             if (food.containsKey(ingredient)) {
@@ -178,6 +179,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
     }
 
     private String buildErrorResponse(String errorMessage) {
+        System.out.println("exception: " + errorMessage);
         return "Error occurred: " + errorMessage;
     }
 

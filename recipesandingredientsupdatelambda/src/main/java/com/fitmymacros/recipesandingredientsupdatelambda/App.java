@@ -81,6 +81,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             return this.objectMapper.readValue(body, Map.class);
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException();
         }
     }
 

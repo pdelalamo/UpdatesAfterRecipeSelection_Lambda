@@ -159,28 +159,35 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
      */
     private Map<String, AttributeValue> updateFoodAvailability(Map<String, String> ingredientsAndQuantities,
             Map<String, AttributeValue> food) {
+        System.out.println("ingredientsAndQuantities: " + ingredientsAndQuantities);
         for (Map.Entry<String, String> entry : ingredientsAndQuantities.entrySet()) {
+            System.out.println("entry: " + entry);
             String ingredient = entry.getKey();
             ingredient = ingredient.replace("(dry)", "");
             String quantityString = entry.getValue();
 
             if (food.containsKey(ingredient)) {
+                System.out.println("food contains " + ingredient);
                 AttributeValue ingredientValue = food.get(ingredient);
                 String usedQuantityString = this.extractUsedQuantity(quantityString);
+                System.out.println("used quantity for " + ingredient + ": " + usedQuantityString);
 
                 int requestedQuantity = Integer.valueOf(usedQuantityString);
 
                 // If the quantity is provided as grams or kilograms
                 if (quantityString.endsWith("g") || quantityString.endsWith("kg")) {
+                    System.out.println("updating quantity for " + ingredient);
                     int availableQuantity = Integer.valueOf(ingredientValue.n());
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
-
+                    System.out.println("done updating quantity for " + ingredient);
                 } else {
                     // If the quantity is provided as just a number (meaning units)
+                    System.out.println("updating quantity for " + ingredient);
                     int availableQuantity = Integer.valueOf(ingredientValue.s());
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                    System.out.println("done updating quantity for " + ingredient);
                 }
             }
         }

@@ -22,11 +22,9 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
 
     private DynamoDbClient dynamoDbClient;
     private final String TABLE_NAME = "FitMyMacros";
-    private ObjectMapper objectMapper;
 
     public App() {
         this.dynamoDbClient = DynamoDbClient.builder().region(Region.EU_WEST_3).build();
-        ObjectMapper objectMapper = new ObjectMapper();
     }
 
     /**
@@ -78,7 +76,8 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
      */
     private Map<String, Object> convertBodyToMap(String body) {
         try {
-            return this.objectMapper.readValue(body, Map.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(body, Map.class);
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException();

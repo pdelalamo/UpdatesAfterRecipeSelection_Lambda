@@ -57,12 +57,15 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             System.out.println("food: " + food);
 
             if (!previousRecipes.isEmpty() && previousRecipes.size() < 6) {
+                System.out.println("if 1");
                 previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             } else if (!previousRecipes.isEmpty()) {
+                System.out.println("if 2");
                 List<AttributeValue> newList = new ArrayList<>(previousRecipes.subList(1, previousRecipes.size()));
                 newList.add(AttributeValue.builder().s(recipeName).build());
                 previousRecipes = newList;
             } else {
+                System.out.println("if 3");
                 previousRecipes = new ArrayList<>();
                 previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             }

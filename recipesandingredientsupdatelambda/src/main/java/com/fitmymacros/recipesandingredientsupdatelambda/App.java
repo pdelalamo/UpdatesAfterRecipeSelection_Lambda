@@ -52,27 +52,31 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             Map<String, AttributeValue> item = retrieveItemFromDynamoDB(userId);
             System.out.println("item: " + item);
             List<AttributeValue> previousRecipes = item.get("previous_recipes").l();
-            System.out.println("previous recipes: " + previousRecipes);
+            List<AttributeValue> updatedPreviousRecipes = new ArrayList<>(previousRecipes);
+            System.out.println("previous recipes: " + updatedPreviousRecipes);
             Map<String, AttributeValue> food = item.get("food").m();
             System.out.println("food: " + food);
 
-            if (previousRecipes != null && !previousRecipes.isEmpty() && previousRecipes.size() < 6) {
-                System.out.println("if 1: " + previousRecipes);
-                previousRecipes.add(AttributeValue.builder().s(recipeName).build());
-            } else if (previousRecipes != null && !previousRecipes.isEmpty() && previousRecipes.size() == 6) {
-                System.out.println("if 2: " + previousRecipes);
-                List<AttributeValue> newList = new ArrayList<>(previousRecipes.subList(1, previousRecipes.size()));
+            if (updatedPreviousRecipes != null && !updatedPreviousRecipes.isEmpty()
+                    && updatedPreviousRecipes.size() < 6) {
+                System.out.println("if 1: " + updatedPreviousRecipes);
+                updatedPreviousRecipes.add(AttributeValue.builder().s(recipeName).build());
+            } else if (updatedPreviousRecipes != null && !updatedPreviousRecipes.isEmpty()
+                    && updatedPreviousRecipes.size() == 6) {
+                System.out.println("if 2: " + updatedPreviousRecipes);
+                List<AttributeValue> newList = new ArrayList<>(
+                        updatedPreviousRecipes.subList(1, updatedPreviousRecipes.size()));
                 newList.add(AttributeValue.builder().s(recipeName).build());
-                previousRecipes = newList;
+                updatedPreviousRecipes = newList;
             } else {
-                System.out.println("if 3: " + previousRecipes);
-                previousRecipes = new ArrayList<>();
-                previousRecipes.add(AttributeValue.builder().s(recipeName).build());
+                System.out.println("if 3: " + updatedPreviousRecipes);
+                updatedPreviousRecipes = new ArrayList<>();
+                updatedPreviousRecipes.add(AttributeValue.builder().s(recipeName).build());
             }
 
-            System.out.println("updated previous recipes: " + previousRecipes);
+            System.out.println("updated previous recipes: " + updatedPreviousRecipes);
 
-            updateItemInDynamoDB(userId, previousRecipes, ingredientsAndQuantities, food);
+            updateItemInDynamoDB(userId, updatedPreviousRecipes, ingredientsAndQuantities, food);
 
             return buildSuccessResponse();
         } catch (Exception e) {

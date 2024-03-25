@@ -46,6 +46,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             System.out.println("recipe: " + recipe);
 
             String recipeName = recipe.get("recipeName").toString();
+            System.out.println("recipeName: " + recipeName);
             Map<String, String> ingredientsAndQuantities = (Map<String, String>) recipe.get("ingredientsAndQuantities");
 
             Map<String, AttributeValue> item = retrieveItemFromDynamoDB(userId);

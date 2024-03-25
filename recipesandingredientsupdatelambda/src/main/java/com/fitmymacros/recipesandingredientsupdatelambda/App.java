@@ -218,7 +218,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
     private Map<String, Object> buildSuccessResponse() {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("statusCode", 200);
-        responseBody.put("body", "Successfully invoked the lambda asynchronously");
+        responseBody.put("body", "Successfully invoked the lambda");
         return responseBody;
     }
 

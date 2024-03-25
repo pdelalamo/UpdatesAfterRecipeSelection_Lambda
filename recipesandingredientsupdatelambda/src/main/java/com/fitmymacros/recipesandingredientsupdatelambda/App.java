@@ -159,6 +159,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
      */
     private Map<String, AttributeValue> updateFoodAvailability(Map<String, String> ingredientsAndQuantities,
             Map<String, AttributeValue> food) {
+        Map<String, AttributeValue> updatedFood = new HashMap<>(food);
         System.out.println("ingredientsAndQuantities: " + ingredientsAndQuantities);
         for (Map.Entry<String, String> entry : ingredientsAndQuantities.entrySet()) {
             System.out.println("entry: " + entry);
@@ -166,9 +167,9 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             ingredient = ingredient.replace("(dry)", "");
             String quantityString = entry.getValue();
 
-            if (food.containsKey(ingredient)) {
+            if (updatedFood.containsKey(ingredient)) {
                 System.out.println("food contains " + ingredient);
-                AttributeValue ingredientValue = food.get(ingredient);
+                AttributeValue ingredientValue = updatedFood.get(ingredient);
                 String usedQuantityString = this.extractUsedQuantity(quantityString);
                 System.out.println("used quantity for " + ingredient + ": " + usedQuantityString);
 
@@ -179,19 +180,21 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                     System.out.println("updating quantity for " + ingredient);
                     int availableQuantity = Integer.valueOf(ingredientValue.n());
                     int remainingQuantity = availableQuantity - requestedQuantity;
-                    food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                    updatedFood.put(ingredient,
+                            AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
                     System.out.println("done updating quantity for " + ingredient);
                 } else {
                     // If the quantity is provided as just a number (meaning units)
                     System.out.println("updating quantity for " + ingredient);
                     int availableQuantity = Integer.valueOf(ingredientValue.s());
                     int remainingQuantity = availableQuantity - requestedQuantity;
-                    food.put(ingredient, AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                    updatedFood.put(ingredient,
+                            AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
                     System.out.println("done updating quantity for " + ingredient);
                 }
             }
         }
-        return food;
+        return updatedFood;
     }
 
     /**

@@ -59,7 +59,6 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             if (!previousRecipes.isEmpty() && previousRecipes.size() < 6) {
                 previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             } else if (!previousRecipes.isEmpty()) {
-                // Create a new list without the first element
                 List<AttributeValue> newList = new ArrayList<>(previousRecipes.subList(1, previousRecipes.size()));
                 newList.add(AttributeValue.builder().s(recipeName).build());
                 previousRecipes = newList;

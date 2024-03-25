@@ -1,6 +1,7 @@
 package com.fitmymacros.recipesandingredientsupdatelambda;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +51,17 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
             Map<String, AttributeValue> item = retrieveItemFromDynamoDB(userId);
             System.out.println("item: " + item);
             List<AttributeValue> previousRecipes = item.get("previous_recipes").l();
+            System.out.println("previous recipes: " + previousRecipes);
             Map<String, AttributeValue> food = item.get("food").m();
+            System.out.println("food: " + food);
 
-            if (previousRecipes.size() < 6) {
+            if (!previousRecipes.isEmpty() && previousRecipes.size() < 6) {
+                previousRecipes.add(AttributeValue.builder().s(recipeName).build());
+            } else if (!previousRecipes.isEmpty()) {
+                previousRecipes.subList(0, 1).clear();
                 previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             } else {
-                previousRecipes.subList(0, 1).clear();
+                previousRecipes = new ArrayList<>();
                 previousRecipes.add(AttributeValue.builder().s(recipeName).build());
             }
             System.out.println("updated previous recipes: " + previousRecipes);

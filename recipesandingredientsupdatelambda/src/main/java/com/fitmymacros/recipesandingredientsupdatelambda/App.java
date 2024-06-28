@@ -180,6 +180,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                 // If the quantity is provided as grams or kilograms
                 if (quantityString.endsWith("g") || quantityString.endsWith("kg")) {
                     System.out.println("updating quantity for " + ingredient);
+                    System.out.println("ingredientvalue 1: " + ingredientValue);
                     int availableQuantity = Integer.valueOf(ingredientValue.n());
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
@@ -188,6 +189,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                 } else {
                     // If the quantity is provided as just a number (meaning units)
                     System.out.println("updating quantity for " + ingredient);
+                    System.out.println("ingredientvalue 2: " + ingredientValue);
                     int availableQuantity = Integer.valueOf(ingredientValue.s());
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,

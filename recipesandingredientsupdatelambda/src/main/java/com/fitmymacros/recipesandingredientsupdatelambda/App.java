@@ -181,7 +181,7 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                 if (quantityString.endsWith("g") || quantityString.endsWith("kg")) {
                     System.out.println("updating quantity for " + ingredient);
                     System.out.println("ingredientvalue 1: " + ingredientValue);
-                    int availableQuantity = Integer.valueOf(ingredientValue.n());
+                    int availableQuantity = Integer.valueOf(ingredientValue.s());
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
                             AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());

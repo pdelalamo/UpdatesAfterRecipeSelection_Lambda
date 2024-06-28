@@ -51,7 +51,9 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
 
             Map<String, AttributeValue> item = retrieveItemFromDynamoDB(userId);
             System.out.println("item: " + item);
-            List<AttributeValue> previousRecipes = item.get("previous_recipes").l();
+            List<AttributeValue> previousRecipes = item.get("previous_recipes") != null
+                    ? item.get("previous_recipes").l()
+                    : new ArrayList<>();
             List<AttributeValue> updatedPreviousRecipes = new ArrayList<>(previousRecipes);
             System.out.println("previous recipes: " + updatedPreviousRecipes);
             Map<String, AttributeValue> food = item.get("food").m();

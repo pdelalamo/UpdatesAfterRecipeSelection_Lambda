@@ -191,7 +191,8 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                     }
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
-                            AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                            AttributeValue.builder().n(Integer.toString(remainingQuantity < 0 ? 0 : remainingQuantity))
+                                    .build());
                     System.out.println("done updating quantity for " + ingredient);
                 } else {
                     // If the quantity is provided as just a number (meaning units)
@@ -207,7 +208,8 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                     }
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
-                            AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
+                            AttributeValue.builder().n(Integer.toString(remainingQuantity < 0 ? 0 : remainingQuantity))
+                                    .build());
                     System.out.println("done updating quantity for " + ingredient);
                 }
             }

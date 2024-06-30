@@ -181,7 +181,14 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                 if (quantityString.endsWith("g") || quantityString.endsWith("kg")) {
                     System.out.println("updating quantity for " + ingredient);
                     System.out.println("ingredientvalue 1: " + ingredientValue);
-                    int availableQuantity = Integer.valueOf(ingredientValue.s());
+                    int availableQuantity;
+                    if (ingredientValue.s() != null) {
+                        availableQuantity = Integer.valueOf(ingredientValue.s());
+                    } else if (ingredientValue.n() != null) {
+                        availableQuantity = Integer.valueOf(ingredientValue.n());
+                    } else {
+                        throw new IllegalArgumentException("Unexpected type for ingredient value: " + ingredientValue);
+                    }
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
                             AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
@@ -190,7 +197,14 @@ public class App implements RequestHandler<Map<String, Object>, Object> {
                     // If the quantity is provided as just a number (meaning units)
                     System.out.println("updating quantity for " + ingredient);
                     System.out.println("ingredientvalue 2: " + ingredientValue);
-                    int availableQuantity = Integer.valueOf(ingredientValue.s());
+                    int availableQuantity;
+                    if (ingredientValue.s() != null) {
+                        availableQuantity = Integer.valueOf(ingredientValue.s());
+                    } else if (ingredientValue.n() != null) {
+                        availableQuantity = Integer.valueOf(ingredientValue.n());
+                    } else {
+                        throw new IllegalArgumentException("Unexpected type for ingredient value: " + ingredientValue);
+                    }
                     int remainingQuantity = availableQuantity - requestedQuantity;
                     updatedFood.put(ingredient,
                             AttributeValue.builder().n(Integer.toString(remainingQuantity)).build());
